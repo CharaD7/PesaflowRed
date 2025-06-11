@@ -1,0 +1,6 @@
+@PesaflowRed_HostAddress = http://localhost:5038
+
+GET {{PesaflowRed_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

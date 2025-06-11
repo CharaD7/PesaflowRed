@@ -1,0 +1,197 @@
+@model PesaflowRed.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="login-wrapper">
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Welcome Back</h1>
+            <p>Enter your client credentials to continue</p>
+        </div>
+
+        <form method="post" action="/login" class="login-form">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    @Html.ValidationSummary(true)
+                </div>
+            }
+            
+            <div class="form-group">
+                <label for="clientId">Client ID</label>
+                <div class="input-group">
+                    <span class="input-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 4C13.1046 4 14 4.89543 14 6V8C14 9.10457 13.1046 10 12 10C10.8954 10 10 9.10457 10 8V6C10 4.89543 10.8954 4 12 4Z" fill="currentColor"/>
+                            <path d="M18 8V6C18 2.68629 15.3137 0 12 0C8.68629 0 6 2.68629 6 6V8C4.34315 8 3 9.34315 3 11V20C3 21.6569 4.34315 23 6 23H18C19.6569 23 21 21.6569 21 20V11C21 9.34315 19.6569 8 18 8Z" fill="currentColor"/>
+                        </svg>
+                    </span>
+                    <input type="text" 
+                           class="form-control" 
+                           id="clientId" 
+                           name="clientId" 
+                           placeholder="Enter your Client ID"
+                           required />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="clientSecret">Client Secret</label>
+                <div class="input-group">
+                    <span class="input-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19 11H5C3.89543 11 3 11.8954 3 13V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V13C21 11.8954 20.1046 11 19 11Z" fill="currentColor"/>
+                            <path d="M12 2C9.23858 2 7 4.23858 7 7V11H9V7C9 5.34315 10.3431 4 12 4C13.6569 4 15 5.34315 15 7V11H17V7C17 4.23858 14.7614 2 12 2Z" fill="currentColor"/>
+                        </svg>
+                    </span>
+                    <input type="password" 
+                           class="form-control" 
+                           id="clientSecret" 
+                           name="clientSecret" 
+                           placeholder="Enter your Client Secret"
+                           required />
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Sign In</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .login-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 20px;
+    }
+
+    .login-container {
+        background: white;
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 420px;
+    }
+
+    .login-header {
+        text-align: center;
+        margin-bottom: 32px;
+    }
+
+    .login-header h1 {
+        color: #2d3748;
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .login-header p {
+        color: #718096;
+        font-size: 16px;
+        margin: 0;
+    }
+
+    .login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .form-group {
+        margin: 0;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #4a5568;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .input-group {
+        position: relative;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #a0aec0;
+        z-index: 1;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 12px 12px 44px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        background: #f7fafc;
+    }
+
+    .form-control:focus {
+        border-color: #4299e1;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+        outline: none;
+        background: white;
+    }
+
+    .alert {
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+    }
+
+    .alert-danger {
+        background-color: #fff5f5;
+        color: #c53030;
+        border: 1px solid #feb2b2;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: #4299e1;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #3182ce;
+        transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
+    }
+
+    @@media (max-width: 480px) {
+        .login-container {
+            padding: 24px;
+        }
+
+        .login-header h1 {
+            font-size: 20px;
+        }
+
+        .login-header p {
+            font-size: 14px;
+        }
+    }
+</style>

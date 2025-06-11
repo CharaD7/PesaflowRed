@@ -1,0 +1,390 @@
+@model PesaflowRed.Models.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="dashboard-container">
+    <div class="header">
+        <h1>Welcome to Your Dashboard</h1>
+        <a href="@Url.Action("Logout", "Auth")" class="logout-button">Logout</a>
+    </div>
+    
+    <div class="dashboard-content">
+        <div class="welcome-message">
+            <h2>Successfully Logged In!</h2>
+            <p>You can now access all the features of the application.</p>
+        </div>
+
+        <div class="auth-details-section">
+            <h3>Authentication Details</h3>
+            <div class="parameter-grid">
+                <div class="parameter-item">
+                    <label>Client ID:</label>
+                    <div class="parameter-value">
+                        <code id="clientId">@Model.ClientId</code>
+                        <button class="copy-button" onclick="copyToClipboard('clientId')">Copy</button>
+                    </div>
+                </div>
+                
+                <div class="parameter-item">
+                    <label>Client Secret:</label>
+                    <div class="parameter-value">
+                        <code id="clientSecret">@Model.ClientSecret</code>
+                        <button class="copy-button" onclick="copyToClipboard('clientSecret')">Copy</button>
+                    </div>
+                </div>
+
+                <div class="parameter-item">
+                    <label>Auth Code:</label>
+                    <div class="parameter-value">
+                        <code id="authCode">@Model.AuthCode</code>
+                        <button class="copy-button" onclick="copyToClipboard('authCode')">Copy</button>
+                    </div>
+                </div>
+
+                <div class="parameter-item">
+                    <label>Grant Type:</label>
+                    <div class="parameter-value">
+                        <code>authorization_code</code>
+                    </div>
+                </div>
+
+                <div class="parameter-item">
+                    <label>Redirect URI:</label>
+                    <div class="parameter-value">
+                        <code id="redirectUri">@Model.RedirectUri</code>
+                        <button class="copy-button" onclick="copyToClipboard('redirectUri')">Copy</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add this after the parameter-grid div and before the access-token-section -->
+            <div class="request-details-section">
+                <h4>POST Request Details</h4>
+                <div class="request-container">
+                    <div class="request-info">
+                        <div class="request-header">
+                            <span class="method">POST</span>
+                            <span class="url" id="requestUrl">Loading...</span>
+                        </div>
+                        <div class="request-body">
+                            <h5>Request Parameters</h5>
+                            <pre id="requestParams">Loading...</pre>
+                            
+                            <h5>Request Headers</h5>
+                            <pre id="requestHeaders">Loading...</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="access-token-section">
+                <h4>Access Token</h4>
+                <div class="token-container">
+                    <code id="accessToken">Retrieving access token...</code>
+                    <button class="copy-button" onclick="copyToClipboard('accessToken')" id="copyTokenButton" disabled>Copy</button>
+                </div>
+                <div id="tokenStatus" class="token-status"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .logout-button {
+        padding: 10px 20px;
+        background-color: #dc3545;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+    }
+
+    .logout-button:hover {
+        background-color: #c82333;
+        color: white;
+        text-decoration: none;
+    }
+
+    .parameter-grid {
+        display: grid;
+        gap: 20px;
+        margin: 20px 0;
+    }
+
+    .parameter-item {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+    }
+
+    .parameter-item label {
+        font-weight: bold;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .parameter-value {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .parameter-value code {
+        flex: 1;
+        padding: 8px;
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        word-break: break-all;
+    }
+
+    .copy-button {
+        padding: 6px 12px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .copy-button:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+    }
+
+    .access-token-section {
+        margin-top: 30px;
+    }
+
+    .token-container {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin: 10px 0;
+    }
+
+    .token-status {
+        margin-top: 10px;
+        font-size: 0.9rem;
+    }
+
+    .token-status.error {
+        color: #dc3545;
+    }
+
+    .token-status.success {
+        color: #28a745;
+    }
+
+    .error-details {
+        background-color: #fff3f3;
+        padding: 15px;
+        border-radius: 5px;
+        border: 1px solid #ffcdd2;
+    }
+
+    .error-details p {
+        margin: 5px 0;
+    }
+
+    .error-details details {
+        margin-top: 10px;
+    }
+
+    .error-details pre {
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+        font-size: 0.85em;
+    }
+
+    .success-message {
+        background-color: #f0fff0;
+        padding: 15px;
+        border-radius: 5px;
+        border: 1px solid #c3e6cb;
+    }
+
+    .success-message p {
+        margin: 5px 0;
+        color: #155724;
+    }
+
+    .request-details-section {
+    margin-top: 30px;
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.request-container {
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.request-header {
+    padding: 15px;
+    background-color: #343a40;
+    color: white;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.method {
+    background-color: #28a745;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-family: monospace;
+}
+
+.url {
+    font-family: monospace;
+    word-break: break-all;
+}
+
+.request-body {
+    padding: 15px;
+}
+
+.request-body h5 {
+    margin: 10px 0;
+    color: #495057;
+}
+
+.request-body pre {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 10px 0;
+    font-size: 0.9em;
+    border: 1px solid #dee2e6;
+}
+</style>
+
+<script>
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    navigator.clipboard.writeText(element.textContent).then(() => {
+        const button = element.nextElementSibling;
+        const originalText = button.textContent;
+        button.textContent = 'Copied!';
+        setTimeout(() => {
+            button.textContent = originalText;
+        }, 2000);
+    });
+}
+
+async function getAccessToken() {
+    try {
+        const tokenElement = document.getElementById('accessToken');
+        const statusElement = document.getElementById('tokenStatus');
+        const copyButton = document.getElementById('copyTokenButton');
+
+        const response = await fetch('/get-access-token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            try {
+                const tokenResponse = JSON.parse(data.response);
+                if (tokenResponse.access_token) {
+                    tokenElement.textContent = tokenResponse.access_token;
+                    statusElement.innerHTML = `
+                        <div class="success-message">
+                            <p>✅ Access token retrieved successfully!</p>
+                            <p>Status Code: ${data.statusCode}</p>
+                            <p>${data.message}</p>
+                        </div>`;
+                    statusElement.className = 'token-status success';
+                    copyButton.disabled = false;
+                    
+                    // Update request details
+                    document.getElementById('requestUrl').textContent = data.request.url;
+                    document.getElementById('requestParams').textContent = 
+                        JSON.stringify(data.request.parameters, null, 2);
+                    document.getElementById('requestHeaders').textContent = 
+                        JSON.stringify(data.request.headers, null, 2);
+                } else {
+                    throw new Error('No access_token in response');
+                }
+            } catch (parseError) {
+                tokenElement.textContent = 'Invalid token response format';
+                statusElement.innerHTML = `
+                    <div class="error-details">
+                        <p>❌ Failed to parse token response</p>
+                        <p>Raw response: ${data.response}</p>
+                        <p>Parse error: ${parseError.message}</p>
+                    </div>`;
+                statusElement.className = 'token-status error';
+                copyButton.disabled = true;
+            }
+        } else {
+            tokenElement.textContent = 'Failed to retrieve access token';
+            let errorDetails = `
+                <div class="error-details">
+                    <p>❌ Error retrieving access token</p>
+                    <p>Error: ${data.error}</p>`;
+            
+            if (data.details) {
+                errorDetails += `
+                    <p>Status Code: ${data.details.statusCode || 'N/A'}</p>
+                    <p>Reason: ${data.details.reasonPhrase || 'N/A'}</p>
+                    ${data.details.message ? `<p>Message: ${data.details.message}</p>` : ''}
+                    ${data.details.stackTrace ? '<details><summary>Stack Trace</summary><pre>' + data.details.stackTrace + '</pre></details>' : ''}
+                </div>`;
+            }
+            
+            statusElement.innerHTML = errorDetails;
+            statusElement.className = 'token-status error';
+            copyButton.disabled = true;
+            
+            // Still update request details even on error
+            if (data.request) {
+                document.getElementById('requestUrl').textContent = data.request.url;
+                document.getElementById('requestParams').textContent = 
+                    JSON.stringify(data.request.parameters, null, 2);
+                document.getElementById('requestHeaders').textContent = 
+                    JSON.stringify(data.request.headers, null, 2);
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('accessToken').textContent = 'Error retrieving access token';
+        document.getElementById('tokenStatus').innerHTML = `
+            <div class="error-details">
+                <p>❌ Fatal Error</p>
+                <p>Message: ${error.message}</p>
+                <details>
+                    <summary>Technical Details</summary>
+                    <pre>${error.stack}</pre>
+                </details>
+            </div>`;
+        document.getElementById('tokenStatus').className = 'token-status error';
+        document.getElementById('copyTokenButton').disabled = true;
+    }
+}
+
+// Call getAccessToken when the page loads
+document.addEventListener('DOMContentLoaded', getAccessToken);
+</script>
