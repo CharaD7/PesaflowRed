@@ -103,6 +103,17 @@
     </div>
 </div>
 
+<!-- Add this section after the access-token-section in Index.cshtml -->
+<div class="user-info-section">
+    <h4>User Information</h4>
+    <button id="getUserInfoButton" class="btn btn-primary mb-3" onclick="getUserInfo()">
+        Get User Info
+    </button>
+    <div class="user-info-container">
+        <pre id="userInfo">No user info available</pre>
+    </div>
+</div>
+
 <style>
     .btn-primary {
         background-color: #4299e1;
@@ -312,6 +323,31 @@
     font-size: 0.9em;
     border: 1px solid #dee2e6;
 }
+
+.user-info-section {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.user-info-container pre {
+    background-color: white;
+    padding: 15px;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+    overflow-x: auto;
+    margin-top: 10px;
+}
+
+.user-info-container pre.success {
+    border-color: #28a745;
+}
+
+.user-info-container pre.error {
+    border-color: #dc3545;
+}
 </style>
 
 <script>
@@ -424,4 +460,30 @@ async function getAccessToken() {
 
 // Call getAccessToken when the page loads
 // document.addEventListener('DOMContentLoaded', getAccessToken);
+</script>
+
+<!-- Add this JavaScript function to your existing script section -->
+<script>
+async function getUserInfo() {
+    const accessToken = document.getElementById('accessToken').textContent;
+    if (!accessToken || accessToken.includes('No access token')) {
+        alert('Please get an access token first');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/user-info?access_token=${encodeURIComponent(accessToken)}`);
+        const data = await response.json();
+        
+        const userInfoElement = document.getElementById('userInfo');
+        userInfoElement.textContent = JSON.stringify(data, null, 2);
+        
+        // Add success styling
+        userInfoElement.className = response.ok ? 'success' : 'error';
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('userInfo').textContent = 'Error retrieving user info';
+        document.getElementById('userInfo').className = 'error';
+    }
+}
 </script>
