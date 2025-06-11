@@ -1,3 +1,4 @@
+@using System.Text.Json
 @model PesaflowRed.Models.DashboardViewModel
 @{
     ViewData["Title"] = "Dashboard";
@@ -60,37 +61,73 @@
 
             <!-- Add this after the parameter-grid div and before the access-token-section -->
             <div class="request-details-section">
-                <h4>POST Request Details</h4>
-                <div class="request-container">
-                    <div class="request-info">
-                        <div class="request-header">
-                            <span class="method">POST</span>
-                            <span class="url" id="requestUrl">Loading...</span>
-                        </div>
-                        <div class="request-body">
-                            <h5>Request Parameters</h5>
-                            <pre id="requestParams">Loading...</pre>
-                            
-                            <h5>Request Headers</h5>
-                            <pre id="requestHeaders">Loading...</pre>
-                        </div>
-                    </div>
-                </div>
+    <h4>POST Request Details</h4>
+    <div class="request-container">
+        <div class="request-info">
+            <div class="request-header">
+                <span class="method">POST</span>
+                <span class="url" id="requestUrl">@(Model.LastRequest?.Url ?? "No request made yet")</span>
             </div>
-
-            <div class="access-token-section">
-                <h4>Access Token</h4>
-                <div class="token-container">
-                    <code id="accessToken">Retrieving access token...</code>
-                    <button class="copy-button" onclick="copyToClipboard('accessToken')" id="copyTokenButton" disabled>Copy</button>
-                </div>
-                <div id="tokenStatus" class="token-status"></div>
+            <div class="request-body">
+                <h5>Request Parameters</h5>
+                <pre id="requestParams">@(Model.LastRequest?.Parameters != null ? 
+                    JsonSerializer.Serialize(Model.LastRequest.Parameters, new JsonSerializerOptions { WriteIndented = true }) 
+                    : "No request made yet")</pre>
+                
+                <h5>Request Headers</h5>
+                <pre id="requestHeaders">@(Model.LastRequest?.Headers != null ? 
+                    JsonSerializer.Serialize(Model.LastRequest.Headers, new JsonSerializerOptions { WriteIndented = true })
+                    : "No request made yet")</pre>
             </div>
         </div>
     </div>
 </div>
 
+<div class="access-token-section">
+    <h4>Access Token</h4>
+    <div class="token-container">
+        <code id="accessToken">@(Model.AccessToken ?? "No access token available")</code>
+        @if (!string.IsNullOrEmpty(Model.AccessToken))
+        {
+            <button class="copy-button" onclick="copyToClipboard('accessToken')">Copy</button>
+        }
+    </div>
+    @if (TempData["TokenError"] != null)
+    {
+        <div class="error-details">
+            <p>❌ @TempData["TokenError"]</p>
+        </div>
+    }
+</div>
+        </div>
+    </div>
+</div>
+
 <style>
+    .btn-primary {
+        background-color: #4299e1;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background-color: #3182ce;
+        transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
+    }
+
+    .mb-3 {
+        margin-bottom: 1rem;
+    }
+
     .header {
         display: flex;
         justify-content: space-between;
@@ -386,5 +423,5 @@ async function getAccessToken() {
 }
 
 // Call getAccessToken when the page loads
-document.addEventListener('DOMContentLoaded', getAccessToken);
+// document.addEventListener('DOMContentLoaded', getAccessToken);
 </script>
