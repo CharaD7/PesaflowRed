@@ -103,16 +103,130 @@
     </div>
 </div>
 
-<!-- Add this section after the access-token-section in Index.cshtml -->
 <div class="user-info-section">
     <h4>User Information</h4>
-    <button id="getUserInfoButton" class="btn btn-primary mb-3" onclick="getUserInfo()">
-        Get User Info
-    </button>
-    <div class="user-info-container">
-        <pre id="userInfo">No user info available</pre>
+    <form id="userInfoForm" class="user-info-form" onsubmit="getUserInfo(event)">
+        <div class="input-group mb-3">
+            <input type="text" 
+                   id="userId" 
+                   class="form-control" 
+                   placeholder="Enter User ID (optional)"
+                   aria-label="User ID">
+            <button type="submit" class="btn btn-primary">
+                Get User Info
+            </button>
+        </div>
+    </form>
+    <div class="json-viewer">
+        <div class="json-header">
+            <span class="json-title">Response</span>
+            <button onclick="copyJson()" class="copy-json-btn">Copy</button>
+        </div>
+        <pre id="jsonViewer" class="json-content">// User info will appear here</pre>
     </div>
 </div>
+
+<style>
+.json-viewer {
+    background-color: #1e1e1e;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+.json-header {
+    background-color: #2d2d2d;
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.json-title {
+    color: #e0e0e0;
+    font-family: 'Consolas', monospace;
+    font-size: 0.9em;
+}
+
+.copy-json-btn {
+    background-color: #404040;
+    color: #e0e0e0;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.copy-json-btn:hover {
+    background-color: #505050;
+}
+
+.json-content {
+    margin: 0;
+    padding: 16px;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    font-family: 'Consolas', monospace;
+    font-size: 0.9em;
+    overflow-x: auto;
+    min-height: 100px;
+}
+
+.string { color: #ce9178; }
+.number { color: #b5cea8; }
+.boolean { color: #569cd6; }
+.null { color: #569cd6; }
+.key { color: #9cdcfe; }
+</style>
+
+<style>
+.user-info-form {
+    margin-bottom: 1rem;
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.input-group .form-control {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.input-group .form-control:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.user-info-container pre {
+    background-color: white;
+    padding: 15px;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+    overflow-x: auto;
+    margin-top: 10px;
+    min-height: 100px;
+}
+
+.user-info-container pre.success {
+    border-color: #28a745;
+}
+
+.user-info-container pre.error {
+    border-color: #dc3545;
+}
+
+.mb-3 {
+    margin-bottom: 1rem;
+}
+</style>
 
 <style>
     .btn-primary {
@@ -462,28 +576,73 @@ async function getAccessToken() {
 // document.addEventListener('DOMContentLoaded', getAccessToken);
 </script>
 
-<!-- Add this JavaScript function to your existing script section -->
+<!-- Update the JavaScript function -->
 <script>
-async function getUserInfo() {
+function syntaxHighlight(json) {
+    if (typeof json !== 'string') {
+        json = JSON.stringify(json, null, 2);
+    }
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        let cls = 'number';
+        if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+                cls = 'key';
+            } else {
+                cls = 'string';
+            }
+        } else if (/true|false/.test(match)) {
+            cls = 'boolean';
+        } else if (/null/.test(match)) {
+            cls = 'null';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+    });
+}
+
+async function getUserInfo(event) {
+    event.preventDefault();
+
     const accessToken = document.getElementById('accessToken').textContent;
     if (!accessToken || accessToken.includes('No access token')) {
         alert('Please get an access token first');
         return;
     }
 
+    const userId = document.getElementById('userId').value.trim();
+    const jsonViewer = document.getElementById('jsonViewer');
+    
     try {
-        const response = await fetch(`/api/user-info?access_token=${encodeURIComponent(accessToken)}`);
+        const url = `/api/user-info?access_token=${encodeURIComponent(accessToken)}${
+            userId ? `&userId=${encodeURIComponent(userId)}` : ''
+        }`;
+        
+        jsonViewer.innerHTML = 'Loading...';
+        
+        const response = await fetch(url);
         const data = await response.json();
         
-        const userInfoElement = document.getElementById('userInfo');
-        userInfoElement.textContent = JSON.stringify(data, null, 2);
-        
-        // Add success styling
-        userInfoElement.className = response.ok ? 'success' : 'error';
+        // Display formatted and syntax-highlighted JSON
+        jsonViewer.innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
     } catch (error) {
         console.error('Error:', error);
-        document.getElementById('userInfo').textContent = 'Error retrieving user info';
-        document.getElementById('userInfo').className = 'error';
+        jsonViewer.innerHTML = syntaxHighlight(JSON.stringify({
+            error: "Failed to fetch user info",
+            details: error.message
+        }, null, 2));
     }
+}
+
+function copyJson() {
+    const jsonViewer = document.getElementById('jsonViewer');
+    const textToCopy = JSON.parse(jsonViewer.textContent); // Parse to remove formatting
+    navigator.clipboard.writeText(JSON.stringify(textToCopy, null, 2))
+        .then(() => {
+            const copyBtn = document.querySelector('.copy-json-btn');
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => {
+                copyBtn.textContent = originalText;
+            }, 2000);
+        });
 }
 </script>

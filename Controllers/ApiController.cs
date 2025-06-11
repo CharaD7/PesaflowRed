@@ -16,54 +16,35 @@ public class ApiController : ControllerBase
         _logger = logger;
     }
 
-    [HttpGet("user-info")]
-    public async Task<IActionResult> GetUserInfo([FromQuery] string access_token)
+[HttpGet("user-info")]
+public async Task<IActionResult> GetUserInfo([FromQuery] string access_token, [FromQuery] string userId)
+{
+    try
     {
-        try
+        if (string.IsNullOrEmpty(access_token))
         {
-            if (string.IsNullOrEmpty(access_token))
-            {
-                return BadRequest(new { error = "Access token is required" });
-            }
-
-            // Set up the request
-            _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", access_token);
-
-            // Make request to PesaFlow's user info endpoint
-            var response = await _httpClient.GetAsync("https://sso.pesaflow.com/api/user");
-            var content = await response.Content.ReadAsStringAsync();
-
-            // Log the response for debugging
-            _logger.LogInformation("User info response: Status {StatusCode}, Content: {Content}", 
-                response.StatusCode, content);
-
-            if (response.IsSuccessStatusCode)
-            {
-                try
-                {
-                    // Try to parse the response as UserInfoResponse
-                    var userInfo = JsonSerializer.Deserialize<UserInfoResponse>(content);
-                    return Ok(userInfo);
-                }
-                catch (JsonException ex)
-                {
-                    // If parsing fails, return the raw response
-                    _logger.LogWarning(ex, "Failed to parse user info response");
-                    return Ok(JsonSerializer.Deserialize<object>(content));
-                }
-            }
-            
-            return StatusCode((int)response.StatusCode, new
-            {
-                error = "Failed to retrieve user info",
-                details = content
-            });
+            return BadRequest(new { error = "Access token is required" });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving user info");
-            return StatusCode(500, new { error = "An error occurred while retrieving user info" });
-        }
+
+        _httpClient.DefaultRequestHeaders.Clear();
+        _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", access_token);
+
+        var baseUrl = "https://sso.pesaflow.com/api/user";
+        var url = !string.IsNullOrEmpty(userId) ? $"{baseUrl}/{userId}" : baseUrl;
+
+        var response = await _httpClient.GetAsync(url);
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Return the raw response with proper content type
+        return Content(content, "application/json");
     }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error retrieving user info");
+        return StatusCode(500, JsonSerializer.Serialize(new { 
+            error = "An error occurred while retrieving user info",
+            details = ex.Message
+        }));
+    }
+}
 }
