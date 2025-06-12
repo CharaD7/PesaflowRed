@@ -105,13 +105,18 @@
 
 <div class="user-info-section">
     <h4>User Information</h4>
-    <form id="userInfoForm" class="user-info-form" onsubmit="getUserInfo(event)">
+    <form id="userInfoForm" class="user-info-form" onsubmit="getUserInfo(event, document.getElementById('userId').value, document.getElementById('userType').value)">
         <div class="input-group mb-3">
             <input type="text" 
                    id="userId" 
                    class="form-control" 
                    placeholder="Enter User ID (optional)"
                    aria-label="User ID">
+            <input type="text" 
+                   id="userType" 
+                   class="form-control" 
+                   placeholder="Enter User Type (citizen/alien/alien)"
+                   aria-label="User ID Type">
             <button type="submit" class="btn btn-primary">
                 Get User Info
             </button>
@@ -609,18 +614,6 @@ function syntaxHighlight(json) {
     });
 }
 
-/*function updateCurlCommand(accessToken, userId) {
-    const baseUrl = 'https://sso.pesaflow.com/api/user-info';
-    const url = `${baseUrl}?access_token=${encodeURIComponent(accessToken)}${
-        userId ? `&Id=${encodeURIComponent(userId)}` : ''
-    }`;
-    
-    const curlCommand = `curl -X GET "${url}" \\
-     -H "Content-Type: application/json"`;
-    
-    document.getElementById('curlCommand').textContent = curlCommand;
-}*/
-
 function copyCurl() {
     const curlCommand = document.getElementById('curlCommand').textContent;
     navigator.clipboard.writeText(curlCommand)
@@ -634,7 +627,28 @@ function copyCurl() {
         });
 }
 
-async function getUserInfo(event) {
+function copyJson() {
+    const jsonContent = document.getElementById('jsonViewer').textContent.trim();
+
+    if (!jsonContent || jsonContent.includes("// User info will appear here")) {
+        alert("No JSON data available to copy.");
+        return;
+    }
+
+    navigator.clipboard.writeText(jsonContent)
+        .then(() => {
+            const copyBtn = document.querySelector('.copy-json-btn');
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => {
+                copyBtn.textContent = originalText;
+            }, 2000);
+        })
+        .catch(err => console.error("Failed to copy JSON:", err));
+}
+
+
+async function getUserInfo(event = null, userId = null, userType = null) {
     event.preventDefault();
 
     // Get the raw text content from the HTML element
@@ -659,8 +673,11 @@ async function getUserInfo(event) {
         const accessToken = parsedData.access_token;
 
         // Construct the API request URL
-        const url = `${baseUrl}/api/user-info?access_token=${encodeURIComponent(accessToken)}`;
-        // console.log(`URL: ${url}`);
+        let url = `${baseUrl}/api/user-info?access_token=${encodeURIComponent(accessToken)}`;
+        // If userId and userType are provided, modify the request URL for /api/find-user
+        if (userId && userType) {
+            url = `${baseUrl}/api/find-user?access_token=${encodeURIComponent(accessToken)}&id_number=${encodeURIComponent(userId)}&id_type=${encodeURIComponent(userType)}`;
+        }
 
         // Display loading indicator
         const jsonViewer = document.getElementById('jsonViewer');
@@ -686,18 +703,6 @@ async function getUserInfo(event) {
         }, null, 2));
     }
 }
-
-/*function updateCurlCommand(accessToken, userId) {
-    const baseUrl = 'https://sso.pesaflow.com/api/user-info';
-    const url = `${baseUrl}?access_token=${encodeURIComponent(accessToken)}${
-        userId ? `&Id=${encodeURIComponent(userId)}` : ''
-    }`;
-
-    const curlCommand = `curl -X GET "${url}" \\
-     -H "Content-Type: application/json"`;
-
-    document.getElementById('curlCommand').textContent = curlCommand;
-}*/
 
 // without userId
 function updateCurlCommand(accessToken) {
