@@ -621,17 +621,6 @@ function syntaxHighlight(json) {
     document.getElementById('curlCommand').textContent = curlCommand;
 }*/
 
-// without userId
-function updateCurlCommand(accessToken) {
-    const baseUrl = 'https://sso.pesaflow.com/api/user-info';
-    const url = `${baseUrl}?access_token=${encodeURIComponent(accessToken)}`;
-
-    const curlCommand = `curl -X GET "${url}" \\
-     -H "Content-Type: application/json"`;
-
-    document.getElementById('curlCommand').textContent = curlCommand;
-}
-
 function copyCurl() {
     const curlCommand = document.getElementById('curlCommand').textContent;
     navigator.clipboard.writeText(curlCommand)
@@ -671,13 +660,20 @@ async function getUserInfo(event) {
 
         // Construct the API request URL
         const url = `${baseUrl}/api/user-info?access_token=${encodeURIComponent(accessToken)}`;
+        console.log(`URL: ${url}`);
 
         // Display loading indicator
         const jsonViewer = document.getElementById('jsonViewer');
         jsonViewer.innerHTML = 'Loading...';
 
         // Fetch user info
-        const response = await fetch(url);
+        // const response = await fetch(url);
+        const response = await fetch(`api/user-info?access_token=${encodeURIComponent(accessToken)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            }});
         console.log(`Response: ${response.status} ${response.statusText}`)
         
         const data = await response.json();
@@ -713,6 +709,7 @@ async function getUserInfo(event) {
 function updateCurlCommand(accessToken) {
     const baseUrl = 'https://sso.pesaflow.com/api/user-info';
     const url = `${baseUrl}?access_token=${encodeURIComponent(accessToken)}`;
+    console.log(`URL: ${url}`);
 
     const curlCommand = `curl -X GET "${url}" \\
      -H "Content-Type: application/json"`;
