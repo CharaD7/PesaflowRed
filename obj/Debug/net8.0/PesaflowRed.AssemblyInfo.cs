@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PesaflowRed")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+faf028e46d574e4dbd1fdde2eb0423f9b511aaf2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1aefffedba814792b4521e511d0c4e75d4cef9f7")]
 [assembly: System.Reflection.AssemblyProductAttribute("PesaflowRed")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PesaflowRed")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
