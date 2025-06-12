@@ -72,7 +72,7 @@ public class ApiController : Controller
             return StatusCode(500, new { error = "An error occurred while retrieving the access token" });
         }
     }
-
+    
     [HttpGet("api/user-info")]
     public async Task<IActionResult> GetUserInfo([FromQuery(Name = "access_token")] string accessToken)
     {
@@ -102,7 +102,8 @@ public class ApiController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving user info");
-            return StatusCode(500, new { error = "Failed to retrieve user info" });
+            return StatusCode((int)Response.StatusCode, new { error = "Failed to retrieve user info" });
+            // return StatusCode(500, new { error = "Failed to retrieve user info" });
         }
     }
 }
