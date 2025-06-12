@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-public class TokenResponse
+public class TokenResponseViewModel
 {
     [JsonPropertyName("access_token")]
     public string AccessToken { get; set; }
@@ -10,6 +10,4 @@ public class TokenResponse
     
     [JsonPropertyName("token_type")]
     public string TokenType { get; set; }
-    
-    public string Error { get; set; }
 }

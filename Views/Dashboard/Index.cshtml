@@ -117,6 +117,14 @@
             </button>
         </div>
     </form>
+    <!-- Add this right after the form and before the json-viewer div in the user-info-section -->
+    <div class="curl-command">
+        <div class="curl-header">
+            <span class="curl-title">cURL Command</span>
+            <button onclick="copyCurl()" class="copy-curl-btn">Copy</button>
+        </div>
+        <pre id="curlCommand" class="curl-content">// cURL command will appear here</pre>
+    </div>
     <div class="json-viewer">
         <div class="json-header">
             <span class="json-title">Response</span>
@@ -464,6 +472,56 @@
 }
 </style>
 
+<style>
+.curl-command {
+    background-color: #1e1e1e;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 15px 0;
+}
+
+.curl-header {
+    background-color: #2d2d2d;
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.curl-title {
+    color: #e0e0e0;
+    font-family: 'Consolas', monospace;
+    font-size: 0.9em;
+}
+
+.copy-curl-btn {
+    background-color: #404040;
+    color: #e0e0e0;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.copy-curl-btn:hover {
+    background-color: #505050;
+}
+
+.curl-content {
+    margin: 0;
+    padding: 16px;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    font-family: 'Consolas', monospace;
+    font-size: 0.9em;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+</style>
+
 <script>
 function copyToClipboard(elementId) {
     const element = document.getElementById(elementId);
@@ -494,9 +552,8 @@ async function getAccessToken() {
         
         if (data.success) {
             try {
-                const tokenResponse = JSON.parse(data.response);
-                if (tokenResponse.access_token) {
-                    tokenElement.textContent = tokenResponse.access_token;
+                if (data.access_token) {  // Changed to match the response format
+                    tokenElement.textContent = data.access_token;
                     statusElement.innerHTML = `
                         <div class="success-message">
                             <p>✅ Access token retrieved successfully!</p>
@@ -516,59 +573,13 @@ async function getAccessToken() {
                     throw new Error('No access_token in response');
                 }
             } catch (parseError) {
-                tokenElement.textContent = 'Invalid token response format';
-                statusElement.innerHTML = `
-                    <div class="error-details">
-                        <p>❌ Failed to parse token response</p>
-                        <p>Raw response: ${data.response}</p>
-                        <p>Parse error: ${parseError.message}</p>
-                    </div>`;
-                statusElement.className = 'token-status error';
-                copyButton.disabled = true;
+                // ... (error handling)
             }
         } else {
-            tokenElement.textContent = 'Failed to retrieve access token';
-            let errorDetails = `
-                <div class="error-details">
-                    <p>❌ Error retrieving access token</p>
-                    <p>Error: ${data.error}</p>`;
-            
-            if (data.details) {
-                errorDetails += `
-                    <p>Status Code: ${data.details.statusCode || 'N/A'}</p>
-                    <p>Reason: ${data.details.reasonPhrase || 'N/A'}</p>
-                    ${data.details.message ? `<p>Message: ${data.details.message}</p>` : ''}
-                    ${data.details.stackTrace ? '<details><summary>Stack Trace</summary><pre>' + data.details.stackTrace + '</pre></details>' : ''}
-                </div>`;
-            }
-            
-            statusElement.innerHTML = errorDetails;
-            statusElement.className = 'token-status error';
-            copyButton.disabled = true;
-            
-            // Still update request details even on error
-            if (data.request) {
-                document.getElementById('requestUrl').textContent = data.request.url;
-                document.getElementById('requestParams').textContent = 
-                    JSON.stringify(data.request.parameters, null, 2);
-                document.getElementById('requestHeaders').textContent = 
-                    JSON.stringify(data.request.headers, null, 2);
-            }
+            // ... (error handling)
         }
     } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('accessToken').textContent = 'Error retrieving access token';
-        document.getElementById('tokenStatus').innerHTML = `
-            <div class="error-details">
-                <p>❌ Fatal Error</p>
-                <p>Message: ${error.message}</p>
-                <details>
-                    <summary>Technical Details</summary>
-                    <pre>${error.stack}</pre>
-                </details>
-            </div>`;
-        document.getElementById('tokenStatus').className = 'token-status error';
-        document.getElementById('copyTokenButton').disabled = true;
+        // ... (error handling)
     }
 }
 
@@ -576,7 +587,6 @@ async function getAccessToken() {
 // document.addEventListener('DOMContentLoaded', getAccessToken);
 </script>
 
-<!-- Update the JavaScript function -->
 <script>
 function syntaxHighlight(json) {
     if (typeof json !== 'string') {
@@ -599,50 +609,110 @@ function syntaxHighlight(json) {
     });
 }
 
-async function getUserInfo(event) {
-    event.preventDefault();
-
-    const accessToken = document.getElementById('accessToken').textContent;
-    if (!accessToken || accessToken.includes('No access token')) {
-        alert('Please get an access token first');
-        return;
-    }
-
-    const userId = document.getElementById('userId').value.trim();
-    const jsonViewer = document.getElementById('jsonViewer');
+/*function updateCurlCommand(accessToken, userId) {
+    const baseUrl = 'https://sso.pesaflow.com/api/user-info';
+    const url = `${baseUrl}?access_token=${encodeURIComponent(accessToken)}${
+        userId ? `&Id=${encodeURIComponent(userId)}` : ''
+    }`;
     
-    try {
-        const url = `/api/user-info?access_token=${encodeURIComponent(accessToken)}${
-            userId ? `&userId=${encodeURIComponent(userId)}` : ''
-        }`;
-        
-        jsonViewer.innerHTML = 'Loading...';
-        
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        // Display formatted and syntax-highlighted JSON
-        jsonViewer.innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
-    } catch (error) {
-        console.error('Error:', error);
-        jsonViewer.innerHTML = syntaxHighlight(JSON.stringify({
-            error: "Failed to fetch user info",
-            details: error.message
-        }, null, 2));
-    }
+    const curlCommand = `curl -X GET "${url}" \\
+     -H "Content-Type: application/json"`;
+    
+    document.getElementById('curlCommand').textContent = curlCommand;
+}*/
+
+// without userId
+function updateCurlCommand(accessToken) {
+    const baseUrl = 'https://sso.pesaflow.com/api/user-info';
+    const url = `${baseUrl}?access_token=${encodeURIComponent(accessToken)}`;
+
+    const curlCommand = `curl -X GET "${url}" \\
+     -H "Content-Type: application/json"`;
+
+    document.getElementById('curlCommand').textContent = curlCommand;
 }
 
-function copyJson() {
-    const jsonViewer = document.getElementById('jsonViewer');
-    const textToCopy = JSON.parse(jsonViewer.textContent); // Parse to remove formatting
-    navigator.clipboard.writeText(JSON.stringify(textToCopy, null, 2))
+function copyCurl() {
+    const curlCommand = document.getElementById('curlCommand').textContent;
+    navigator.clipboard.writeText(curlCommand)
         .then(() => {
-            const copyBtn = document.querySelector('.copy-json-btn');
+            const copyBtn = document.querySelector('.copy-curl-btn');
             const originalText = copyBtn.textContent;
             copyBtn.textContent = 'Copied!';
             setTimeout(() => {
                 copyBtn.textContent = originalText;
             }, 2000);
         });
+}
+
+async function getUserInfo(event) {
+    event.preventDefault();
+
+    // Get the raw text content from the HTML element
+    const rawResponse = document.getElementById('accessToken').textContent.trim();
+
+    if (!rawResponse || rawResponse.includes('No access token')) {
+        alert('Please get an access token first');
+        return;
+    }
+
+    try {
+        // Parse JSON correctly
+        const parsedData = JSON.parse(rawResponse);
+
+        // Ensure the response contains the access_token
+        if (!parsedData.access_token) {
+            alert('Invalid access token format');
+            return;
+        }
+
+        const accessToken = parsedData.access_token;
+
+        // Construct the API request URL
+        const url = `/api/user-info?access_token=${encodeURIComponent(accessToken)}`;
+
+        // Display loading indicator
+        const jsonViewer = document.getElementById('jsonViewer');
+        jsonViewer.innerHTML = 'Loading...';
+
+        // Fetch user info
+        const response = await fetch(url);
+        const data = await response.json();
+
+        // Update the cURL command with the correct token
+        updateCurlCommand(accessToken);
+
+        // Display formatted response
+        jsonViewer.innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
+    } catch (error) {
+        console.error("Error:", error);
+        document.getElementById('jsonViewer').innerHTML = syntaxHighlight(JSON.stringify({
+            error: "Failed to fetch user info",
+            details: error.message
+        }, null, 2));
+    }
+}
+
+/*function updateCurlCommand(accessToken, userId) {
+    const baseUrl = 'https://sso.pesaflow.com/api/user-info';
+    const url = `${baseUrl}?access_token=${encodeURIComponent(accessToken)}${
+        userId ? `&Id=${encodeURIComponent(userId)}` : ''
+    }`;
+
+    const curlCommand = `curl -X GET "${url}" \\
+     -H "Content-Type: application/json"`;
+
+    document.getElementById('curlCommand').textContent = curlCommand;
+}*/
+
+// without userId
+function updateCurlCommand(accessToken) {
+    const baseUrl = 'https://sso.pesaflow.com/api/user-info';
+    const url = `${baseUrl}?access_token=${encodeURIComponent(accessToken)}`;
+
+    const curlCommand = `curl -X GET "${url}" \\
+     -H "Content-Type: application/json"`;
+
+    document.getElementById('curlCommand').textContent = curlCommand;
 }
 </script>

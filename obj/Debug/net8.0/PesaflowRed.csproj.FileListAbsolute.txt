@@ -34,3 +34,4 @@
 /home/charad7/RiderProjects/PesaflowRed/obj/Debug/net8.0/PesaflowRed.genruntimeconfig.cache
 /home/charad7/RiderProjects/PesaflowRed/obj/Debug/net8.0/ref/PesaflowRed.dll
 /home/charad7/RiderProjects/PesaflowRed/obj/Debug/net8.0/PesaflowRed.sourcelink.json
+/home/charad7/RiderProjects/PesaflowRed/bin/Debug/net8.0/Newtonsoft.Json.dll
