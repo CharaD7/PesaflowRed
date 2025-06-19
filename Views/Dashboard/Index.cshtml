@@ -92,6 +92,21 @@
             <button class="copy-button" onclick="copyToClipboard('accessToken')">Copy</button>
         }
     </div>
+    <hr/>
+    <h4>User Info Token</h4>
+    <div class="token-container">
+        <code id="userInfoToken">@(Model.UserInfoToken ?? "No access token available")</code>
+        @if (!string.IsNullOrEmpty(Model.UserInfoToken))
+        {
+            <button class="copy-button" onclick="copyToClipboard('UserInfoToken')">Copy</button>
+        }
+    </div>
+    @*<div class="token-container">
+        <div class="token-item">
+            <h4>User Info Token <button onclick="copyToken('userInfoToken')" class="copy-btn">Copy</button></h4>
+            <pre id="userInfoToken" class="token-content">No user info token generated yet</pre>
+        </div>
+    </div>*@
     @if (TempData["TokenError"] != null)
     {
         <div class="error-details">
@@ -105,20 +120,33 @@
 
 <div class="user-info-section">
     <h4>User Information</h4>
-    <form id="userInfoForm" class="user-info-form" onsubmit="getUserInfo(event, document.getElementById('userId').value, document.getElementById('userType').value)">
-        <div class="input-group mb-3">
-            <input type="text" 
-                   id="userId" 
-                   class="form-control" 
-                   placeholder="Enter User ID (optional)"
-                   aria-label="User ID">
-            <input type="text" 
-                   id="userType" 
-                   class="form-control" 
-                   placeholder="Enter User Type (citizen/alien/visitor/business)"
-                   aria-label="User ID Type">
-            <button type="submit" class="btn btn-primary">
-                Get User Info
+   <div class="action-buttons">
+       <button onclick="getUserInfo(event)" class="btn btn-primary">Get User Info</button>
+   </div>
+    <form id="findInfoForm" class="user-info-form" onsubmit="submitFindUser(event)">
+        <div class="d-flex flex-column gap-3">
+            <div class="form-group">
+                <label for="userId">User ID (optional)</label>
+                <input type="text" 
+                       id="userId" 
+                       class="form-control" 
+                       placeholder="Enter User ID"
+                       aria-label="User ID">
+            </div>
+
+            <div class="form-group">
+                <label for="userType">Account Type</label>
+                <select id="userType" class="form-control" required>
+                    <option value="">Select ID Type</option>
+                    <option value="citizen">National ID</option>
+                    <option value="alien">Foreign Resident</option>
+                    <option value="visitor">Visitor</option>
+                    <option value="business">Business</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+                Find User
             </button>
         </div>
     </form>
@@ -239,6 +267,8 @@
 .mb-3 {
     margin-bottom: 1rem;
 }
+
+
 </style>
 
 <style>
@@ -347,18 +377,6 @@
         margin: 10px 0;
     }
 
-    .token-status {
-        margin-top: 10px;
-        font-size: 0.9rem;
-    }
-
-    .token-status.error {
-        color: #dc3545;
-    }
-
-    .token-status.success {
-        color: #28a745;
-    }
 
     .error-details {
         background-color: #fff3f3;
@@ -474,6 +492,31 @@
 
 .user-info-container pre.error {
     border-color: #dc3545;
+}
+</style>
+
+<style>
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
 }
 </style>
 
@@ -648,7 +691,70 @@ function copyJson() {
 }
 
 
-async function getUserInfo(event = null, userId = null, userType = null) {
+async function submitFindUser(event) {
+    const baseUrl = 'https://sso.pesaflow.com';
+    event.preventDefault();
+    
+    var userId = document.getElementById('userId');
+    var userType = document.getElementById('userType');
+
+    if (!userId || !userType) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    try {
+        // Get new token for user lookup
+        const tokenRequestData = new FormData();
+        tokenRequestData.append('client_id', '28043c729d85e65f54b161855e94dafa');
+        tokenRequestData.append('client_secret', 'elsfDNfQSzFwTKmcNIzjq5NCR1/wbuVwEfjCgPEDVo4=');
+        tokenRequestData.append('grant_type', 'client_credentials');
+
+        const tokenResponse = await fetch(`${baseUrl}/oauth/access-token`, {
+            method: 'POST',
+            'Content-Type': 'application/json',
+            body: tokenRequestData
+        });
+
+        const parsedData = await tokenResponse.json();
+
+        // Ensure the response contains the access_token
+        if (!parsedData.access_token) {
+            alert('Invalid access token format');
+            return;
+        }
+
+        const userAccessToken = parsedData.access_token;
+
+        // Display the new token
+        const userInfoTokenElement = document.getElementById('userInfoToken');
+        userInfoTokenElement.innerHTML = syntaxHighlight(JSON.stringify(parsedData, null, 2));
+
+        // Get user info
+        let userInfoUrl = `${baseUrl}/api/find-user?access_token=${userAccessToken}&id_number=${userId.value}&id_type=${userType.value}`;
+
+        const response = await fetch(userInfoUrl);
+
+        // Update the cURL command with the correct url
+        updateCurlCommand(userInfoUrl);
+
+        // Display loading indicator
+        const jsonViewer = document.getElementById('jsonViewer');
+        
+        const data = await response.json();
+        
+        // Display formatted response
+        jsonViewer.innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
+    } catch (error) {
+        console.error("Error:", error);
+        document.getElementById('jsonViewer').innerHTML = syntaxHighlight(JSON.stringify({
+            error: "Failed to fetch user info",
+            details: error.message
+        }, null, 2));
+    }
+}
+
+async function getUserInfo(event) {
     event.preventDefault();
 
     // Get the raw text content from the HTML element
@@ -674,10 +780,6 @@ async function getUserInfo(event = null, userId = null, userType = null) {
 
         // Construct the API request URL
         let url = `${baseUrl}/api/user-info?access_token=${encodeURIComponent(accessToken)}`;
-        // If userId and userType are provided, modify the request URL for /api/find-user
-        if (userId && userType) {
-            url = `${baseUrl}/api/find-user?access_token=${encodeURIComponent(accessToken)}&id_number=${encodeURIComponent(userId)}&id_type=${encodeURIComponent(userType)}`;
-        }
 
         // Display loading indicator
         const jsonViewer = document.getElementById('jsonViewer');
@@ -691,7 +793,7 @@ async function getUserInfo(event = null, userId = null, userType = null) {
         // console.log(`Data: ${JSON.stringify(data, null, 2)}`)
 
         // Update the cURL command with the correct token
-        updateCurlCommand(accessToken);
+        updateCurlCommand(url);
 
         // Display formatted response
         jsonViewer.innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
@@ -705,10 +807,7 @@ async function getUserInfo(event = null, userId = null, userType = null) {
 }
 
 // without userId
-function updateCurlCommand(accessToken) {
-    const baseUrl = 'https://sso.pesaflow.com/api/user-info';
-    const url = `${baseUrl}?access_token=${encodeURIComponent(accessToken)}`;
-    console.log(`URL: ${url}`);
+function updateCurlCommand(url) {
 
     const curlCommand = `curl -X GET "${url}" \\
      -H "Content-Type: application/json"`;
