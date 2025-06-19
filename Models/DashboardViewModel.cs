@@ -8,6 +8,7 @@ public class DashboardViewModel
     public string ClientSecret { get; set; }
     public string RedirectUri { get; set; }
     public string AccessToken { get; set; }
+    public string UserInfoToken { get; set;  }
     public RequestDetails LastRequest { get; set; }
 }
 
