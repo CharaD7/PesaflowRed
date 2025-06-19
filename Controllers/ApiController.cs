@@ -106,4 +106,42 @@ public class ApiController : Controller
             // return StatusCode(500, new { error = "Failed to retrieve user info" });
         }
     }
+    
+    [HttpGet("api/find-user")]
+    public async Task<IActionResult> FindUser(
+        [FromQuery(Name = "access_token")] string accessToken,
+        [FromQuery(Name = "idNumber")] string idNumber,
+        [FromQuery(Name = "idType")] string idType
+        )
+    {
+        if (string.IsNullOrEmpty(accessToken))
+        {
+            return BadRequest(new { error = "Access token is required" });
+        }
+
+        try
+        {
+            var baseUrl = "https://sso.pesaflow.com/api/user-info";
+            // Parse JSON and extract access_token
+            JObject jsonObj = JObject.Parse(Uri.EscapeDataString(accessToken));
+            string accessTk = jsonObj["access_token"].ToString();
+            var url = $"{baseUrl}?access_token={accessTk}&id_number={idNumber}&id_type={idType}";
+
+            var response = await _httpClient.GetAsync(url);
+            var content = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                return Ok(new { data = JsonDocument.Parse(content).RootElement });
+            }
+
+            return StatusCode((int)response.StatusCode, new { error = content });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving user info");
+            return StatusCode((int)Response.StatusCode, new { error = "Failed to retrieve user info" });
+            // return StatusCode(500, new { error = "Failed to retrieve user info" });
+        }
+    }
 }
